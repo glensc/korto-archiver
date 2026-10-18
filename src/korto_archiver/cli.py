@@ -47,6 +47,8 @@ def run(args: argparse.Namespace) -> int:
     manifest = _read_manifest(manifest_path)
     manifest.setdefault("version", 1)
     manifest.setdefault("messages", {})
+    if manifest.get("apartment_id") is not None and str(manifest["apartment_id"]) != str(args.apartment_id):
+        raise RuntimeError("This archive belongs to another apartment; use a different --output directory")
     manifest["apartment_id"] = str(args.apartment_id)
 
     with KortoClient(args.cookie, apartment_id=args.apartment_id, api_url=args.api_url) as client:
