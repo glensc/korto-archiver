@@ -38,7 +38,7 @@ class _PlainTextHTML(HTMLParser):
 def html_to_text(value: str | None) -> str:
     parser = _PlainTextHTML()
     parser.feed(value or "")
-    text = html.unescape("".join(parser.parts))
+    text = "".join(parser.parts)
     text = re.sub(r"[ \t]+\n", "\n", text)
     text = re.sub(r"\n[ \t]+", "\n", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
