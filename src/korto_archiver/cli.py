@@ -128,6 +128,7 @@ def run(args: argparse.Namespace) -> int:
                 write_json(manifest_path, manifest)
                 print(f"Archived {message_type}/{message_id}: {detail.get('subject') or '(no subject)'}")
             except (KortoAPIError, OSError, RuntimeError, ValueError) as exc:
+                manifest["messages"].pop(key, None)
                 print(f"error: failed to archive {message_type}/{message_id}: {exc}", file=sys.stderr)
                 # Continue so one inaccessible message does not prevent the rest of the archive.
 
