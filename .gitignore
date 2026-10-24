@@ -1,3 +1,10 @@
+__pycache__/
+*.py[cod]
 /.direnv/
+/.env
 /.envrc.local
 /.idea/
+/.pytest_cache/
+/.venv/
+/archive/
+/src/*.egg-info/
