@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 import mimetypes
@@ -14,6 +15,8 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 TALLINN = ZoneInfo("Europe/Tallinn")
+
+_BOUNDARY_PREFIX = "=" * 15
 
 
 class _PlainTextHTML(HTMLParser):
@@ -86,6 +89,20 @@ def _set_common_headers(
     email["X-Korto-Archived"] = "true"
 
 
+def _set_deterministic_boundaries(email: EmailMessage, seed: str) -> None:
+    """Give every multipart part a stable boundary derived from ``seed``.
+
+    ``EmailMessage`` invents a random boundary whenever content turns a part
+    into a multipart. Setting them explicitly makes repeated writes of the
+    same message byte-for-byte identical, whether the archive already exists
+    or starts empty.
+    """
+    for index, part in enumerate(node for node in email.walk() if node.is_multipart()):
+        digest = hashlib.sha256(f"{seed}\0{index}".encode("utf-8")).digest()
+        number = int.from_bytes(digest, "big") % 10**19
+        part.set_param("boundary", f"{_BOUNDARY_PREFIX}{number:019d}==")
+
+
 def _add_attachments(
     email: EmailMessage,
     attachments: list[dict[str, Any]],
@@ -147,6 +164,7 @@ def write_email(
     email.add_alternative(body_html or "<p>(No message body)</p>", subtype="html")
     email_path.parent.mkdir(parents=True, exist_ok=True)
     saved = _add_attachments(email, message.get("attachments") or [], attachment_dir, download)
+    _set_deterministic_boundaries(email, f"{message_type}/{message_id}/{reply_index}")
     email_path.write_bytes(email.as_bytes())
     return saved
 
