@@ -9,8 +9,7 @@ A first-pass Python archiver for messages in Korto's resident portal. It uses th
 ```text
 archive/
 ├── lists/
-│   ├── messages-archived-false.json
-│   └── messages-archived-true.json
+│   └── messages.json          # deduplicated list from both archived views
 ├── messages/
 │   └── discussion-54321/
 │       ├── message.json       # full GraphQL detail response
@@ -83,7 +82,7 @@ pytest
 
 ## Current limitations / next refinements
 
-- The `GetMessagesData` query has no explicit pagination fields in the request captured so far. The script saves each list response verbatim so completeness can be checked against Korto's UI.
+- The `GetMessagesData` query has no explicit pagination fields in the request captured so far. The script merges both responses into one deduplicated `lists/messages.json`, keeping each message's `is_archived` flag.
 - This first version assumes the observed GraphQL response shape remains stable.
 - Attachment URLs are used as returned by GraphQL and downloaded with the same cookie-authenticated HTTP session.
 - Message date strings such as `06.05.2026 13:21` are interpreted in `Europe/Tallinn`.
