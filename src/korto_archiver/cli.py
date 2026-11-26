@@ -52,18 +52,20 @@ def run(args: argparse.Namespace) -> int:
     manifest["apartment_id"] = str(args.apartment_id)
 
     with KortoClient(args.cookie, apartment_id=args.apartment_id, api_url=args.api_url) as client:
-        # Fetch both categories and merge by type + ID in case the server's views overlap.
+        # The archived and non-archived views can return the same message, so
+        # keep one entry per (type, id) and save a single deduplicated list.
         listed: dict[tuple[str, str], dict[str, Any]] = {}
         for archived in (False, True):
             items = client.list_messages(archived=archived)
-            write_json(output / "lists" / f"messages-archived-{str(archived).lower()}.json", items)
             print(f"Listed {len(items)} {'archived' if archived else 'non-archived'} messages")
             for item in items:
                 if item.get("id") is None or not item.get("type"):
                     print(f"warning: skipping list item without id/type: {item!r}", file=sys.stderr)
                     continue
+                item.setdefault("is_archived", archived)
                 listed[(str(item["type"]), str(item["id"]))] = item
 
+        write_json(output / "lists" / "messages.json", list(listed.values()))
         print(f"Found {len(listed)} unique message IDs")
         new_count = updated_count = skipped_count = 0
         for (message_type, message_id), list_item in sorted(
